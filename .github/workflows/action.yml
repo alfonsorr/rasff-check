@@ -1,0 +1,44 @@
+name: Check and notify
+
+# Controls when the workflow will run
+on:
+  schedule:
+    - cron: "0 8 * * 2"
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+  
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+          
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+        
+      - name: Setup coursier
+        uses: coursier/cache-action@v6
+
+      - name: Setup ammonite
+        uses: coursier/setup-action@v1
+        with:
+          jvm: adopt:11
+          apps: ammonite
+          
+      - name: launch script
+        id: get_text
+        run: echo "::set-output name=text::$(amm script.sc)"
+        
+      - name: send telegram message on push
+        uses: appleboy/telegram-action@master
+        if: ${{steps.get_text.outputs.text != ''}}
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: |
+            ${{steps.get_text.outputs.text}}
