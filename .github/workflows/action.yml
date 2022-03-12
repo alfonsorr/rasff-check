@@ -32,7 +32,13 @@ jobs:
           
       - name: launch script
         id: get_text
-        run: echo "::set-output name=text::$(amm script.sc)"
+        run: |
+          description=$(amm script.sc)
+          echo $description
+          description="${description//'%'/'%25'}"
+          description="${description//$'\n'/'%0A'}"
+          description="${description//$'\r'/'%0D'}"
+          echo "::set-output name=text::$description"
         
       - name: send telegram message on push
         uses: appleboy/telegram-action@master
